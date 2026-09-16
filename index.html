@@ -446,7 +446,6 @@
             halftimePlaylist: []
         };
 
-        // Last inn lagret data fra localStorage hvis det finnes
         function loadFromLocalStorage() {
             try {
                 const savedState = localStorage.getItem('hk72_dashboard_state');
@@ -462,7 +461,6 @@
             }
         }
 
-        // Lagre til localStorage
         function saveToLocalStorage() {
             try {
                 localStorage.setItem('hk72_dashboard_state', JSON.stringify({
@@ -898,9 +896,13 @@
             if (audioUrl) {
                 currentAudioElement = new Audio(audioUrl);
                 currentAudioElement.volume = state.masterVolume / 100;
-                currentAudioElement.play().catch(e => {
-                    console.log("Audio play blocked by policy:", e);
-                });
+                // iPadOS policy: Kan kaste unntak hvis bruker ikke har interagert direkte nok, trygg håndtering:
+                const playPromise = currentAudioElement.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => {
+                        console.log("iPadOS audio block / interaction error:", e);
+                    });
+                }
             }
 
             updateAudioTimerDisplayCustom(baseElapsedSecs, totalPlaylistSecs);
@@ -985,7 +987,6 @@
         function startTimeout() {
             if (isTimeoutRunning) return;
 
-            // Sjekk om det er valgt sang
             if (!state.timeout.audioUrl) {
                 const warningEl = document.getElementById('timeoutWarning');
                 if (warningEl) {
@@ -1192,7 +1193,6 @@
             document.getElementById('trackDurationInput').value = "3:30";
             pendingTrackAudioFile = null;
             document.getElementById('trackAudioFileName').innerText = "Ingen lokal fil valgt";
-            document.getElementById('trackModal').classList.add('hidden'); // eller fjern hvis feil, men holdes likt
             document.getElementById('trackModal').classList.remove('hidden');
         }
         function closeTrackModal() {
